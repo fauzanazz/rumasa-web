@@ -17,12 +17,16 @@ export function QuickContactForm() {
     setIsSubmitting(true);
 
     try {
+      console.log('Submitting form data:', { name: formData.name, email: formData.email, phone: formData.phone });
+
       // Save to spreadsheet
       const result = await saveQuickContact({
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
       });
+
+      console.log('Save result:', result);
 
       if (result.ok) {
         // Create WhatsApp message
@@ -35,12 +39,14 @@ export function QuickContactForm() {
 
         // Reset form
         setFormData({ name: "", email: "", phone: "" });
+        alert('Data berhasil disimpan! Membuka WhatsApp...');
       } else {
-        alert('Gagal menyimpan data. Silakan coba lagi.');
+        console.error('Failed to save:', result.error);
+        alert(`Gagal menyimpan data: ${result.error || 'Silakan coba lagi.'}`);
       }
     } catch (error) {
       console.error('Error submitting form:', error);
-      alert('Terjadi kesalahan. Silakan coba lagi.');
+      alert(`Terjadi kesalahan: ${error instanceof Error ? error.message : 'Silakan coba lagi.'}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -67,11 +73,11 @@ export function QuickContactForm() {
           <input
             type="text"
             name="name"
-            placeholder="Your Name"
+            placeholder="Nama Anda"
             value={formData.name}
             onChange={handleChange}
             required
-            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none bg-white placeholder:text-gray-500"
+            className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none bg-white placeholder:text-gray-400 text-gray-900 font-medium shadow-sm"
           />
         </div>
 
@@ -79,11 +85,11 @@ export function QuickContactForm() {
           <input
             type="email"
             name="email"
-            placeholder="Email Address"
+            placeholder="Alamat Email"
             value={formData.email}
             onChange={handleChange}
             required
-            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none bg-white placeholder:text-gray-500"
+            className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none bg-white placeholder:text-gray-400 text-gray-900 font-medium shadow-sm"
           />
         </div>
 
@@ -91,18 +97,18 @@ export function QuickContactForm() {
           <input
             type="tel"
             name="phone"
-            placeholder="Phone Number"
+            placeholder="Nomor Telepon"
             value={formData.phone}
             onChange={handleChange}
             required
-            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none bg-white placeholder:text-gray-500"
+            className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none bg-white placeholder:text-gray-400 text-gray-900 font-medium shadow-sm"
           />
         </div>
 
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full bg-blue-600 text-white font-semibold py-4 px-6 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+          className="w-full bg-blue-600 text-white font-bold py-4 px-6 rounded-lg hover:bg-blue-700 transition-all duration-300 disabled:bg-gray-400 disabled:cursor-not-allowed shadow-lg hover:shadow-xl hover:scale-105 transform"
         >
           {isSubmitting ? "Mengirim..." : "Get Started"}
         </button>
