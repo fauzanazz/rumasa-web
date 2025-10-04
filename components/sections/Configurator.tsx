@@ -2,177 +2,258 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { popularDesigns } from "@/config/copy";
 
-type ExteriorStyle = "Modern Glass" | "Warm Wood" | "Natural Stone" | "Mixed Materials";
-type RoofStyle = "Flat Roof" | "Gable Roof" | "Shed Roof" | "Butterfly Roof";
-type ColorScheme = "Neutral Tones" | "Warm Earth" | "Cool Blues";
+type Lantai = "2.5" | "3.5";
+type Style = "Noir" | "Light Concrete" | "Terracota";
+
+// Module sizes in m²
+const MODULE_SIZES: Record<string, number> = {
+  // Ground floor
+  "Room Plus A": 25,
+  "Room Plus B": 28,
+  "Carport Plus A": 20,
+  "Carport Plus B": 22,
+  "Kitchen Plus": 18,
+  // Mid floor
+  "Room Plus": 20,
+  "Living Plus A": 30,
+  "Living Plus B": 32,
+  "Studio Apartment": 35,
+  "Studio Basic": 25,
+  // Top floor
+  "Living Plus": 30,
+};
+
+const PRICE_PER_M2 = 15000000; // IDR 15 juta per m²
 
 export function Configurator() {
-  const [exteriorStyle, setExteriorStyle] = useState<ExteriorStyle>("Mixed Materials");
-  const [roofStyle, setRoofStyle] = useState<RoofStyle>("Butterfly Roof");
-  const [colorScheme, setColorScheme] = useState<ColorScheme>("Cool Blues");
-  const [squareFootage, setSquareFootage] = useState(2400);
-  const [bedrooms, setBedrooms] = useState(3);
-  const [estimatedPrice, setEstimatedPrice] = useState(852000);
+  const [lantai, setLantai] = useState<Lantai>("2.5");
+  const [ground, setGround] = useState<string[]>([]);
+  const [mid2, setMid2] = useState<string[]>([]);
+  const [mid3, setMid3] = useState<string[]>([]);
+  const [top, setTop] = useState<string[]>([]);
+  const [style, setStyle] = useState<Style>("Noir");
+  const [luasBangunan, setLuasBangunan] = useState(0);
+  const [estimasiBiaya, setEstimasiBiaya] = useState(0);
 
-  // Calculate price based on selections
+  const tanah_m2 = 49;
+
+  // Toggle selection helper
+  const toggleSelection = (
+    list: string[],
+    item: string,
+    setter: React.Dispatch<React.SetStateAction<string[]>>
+  ) => {
+    if (list.includes(item)) {
+      setter(list.filter((i) => i !== item));
+    } else {
+      setter([...list, item]);
+    }
+  };
+
+  // Calculate building area and estimated cost
   useEffect(() => {
-    let basePrice = squareFootage * 300; // $300 per sq ft base
+    let totalArea = 0;
 
-    // Exterior style pricing
-    const exteriorPricing: Record<ExteriorStyle, number> = {
-      "Modern Glass": 1.3,
-      "Warm Wood": 1.1,
-      "Natural Stone": 1.2,
-      "Mixed Materials": 1.15,
+    // Add ground floor area
+    ground.forEach((module) => {
+      totalArea += MODULE_SIZES[module] || 0;
+    });
+
+    // Add mid floor 2 area
+    mid2.forEach((module) => {
+      totalArea += MODULE_SIZES[module] || 0;
+    });
+
+    // Add mid floor 3 area if 3.5 lantai
+    if (lantai === "3.5") {
+      mid3.forEach((module) => {
+        totalArea += MODULE_SIZES[module] || 0;
+      });
+    }
+
+    // Add top floor area
+    top.forEach((module) => {
+      totalArea += MODULE_SIZES[module] || 0;
+    });
+
+    setLuasBangunan(totalArea);
+
+    // Calculate base price
+    let basePrice = totalArea * PRICE_PER_M2;
+
+    // Add style premium
+    const stylePremium: Record<Style, number> = {
+      "Noir": 50000000,
+      "Light Concrete": 45000000,
+      "Terracota": 55000000,
     };
 
-    // Roof style pricing
-    const roofPricing: Record<RoofStyle, number> = {
-      "Flat Roof": 1.0,
-      "Gable Roof": 1.05,
-      "Shed Roof": 1.02,
-      "Butterfly Roof": 1.08,
-    };
-
-    // Color scheme pricing
-    const colorPricing: Record<ColorScheme, number> = {
-      "Neutral Tones": 1.0,
-      "Warm Earth": 1.03,
-      "Cool Blues": 1.05,
-    };
-
-    const finalPrice =
-      basePrice *
-      exteriorPricing[exteriorStyle] *
-      roofPricing[roofStyle] *
-      colorPricing[colorScheme];
-
-    setEstimatedPrice(Math.round(finalPrice));
-  }, [exteriorStyle, roofStyle, colorScheme, squareFootage, bedrooms]);
+    const totalPrice = basePrice + stylePremium[style];
+    setEstimasiBiaya(totalPrice);
+  }, [lantai, ground, mid2, mid3, top, style]);
 
   const handleConsultation = () => {
-    // Redirect to consultation page with config
     window.location.href = "/konsultasi";
+  };
+
+  const formatIDR = (amount: number) => {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0,
+    }).format(amount);
   };
 
   return (
     <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50">
       <div className="max-w-7xl mx-auto">
         <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-900 mb-12">
-          Design Your Home
+          Desain Rumah Anda
         </h2>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Left Column - Configuration Options */}
           <div className="space-y-8">
-            {/* Exterior Style */}
+            {/* Pilihan Lantai */}
             <div>
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Exterior Style</h3>
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Pilihan Lantai</h3>
               <div className="grid grid-cols-2 gap-3">
-                {(["Modern Glass", "Warm Wood", "Natural Stone", "Mixed Materials"] as ExteriorStyle[]).map((style) => (
+                <button
+                  onClick={() => setLantai("2.5")}
+                  className={`px-4 py-3 rounded-lg border-2 text-sm font-medium transition-all ${
+                    lantai === "2.5"
+                      ? "border-blue-600 bg-blue-600 text-white"
+                      : "border-gray-300 bg-white text-gray-900 hover:border-blue-400"
+                  }`}
+                >
+                  2,5 Lantai
+                </button>
+                <button
+                  onClick={() => setLantai("3.5")}
+                  className={`px-4 py-3 rounded-lg border-2 text-sm font-medium transition-all ${
+                    lantai === "3.5"
+                      ? "border-blue-600 bg-blue-600 text-white"
+                      : "border-gray-300 bg-white text-gray-900 hover:border-blue-400"
+                  }`}
+                >
+                  3,5 Lantai *
+                </button>
+              </div>
+            </div>
+
+            {/* Ground Floor */}
+            <div>
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Ground Floor</h3>
+              <div className="grid grid-cols-2 gap-3">
+                {popularDesigns.ground_floor.map((item) => (
                   <button
-                    key={style}
-                    onClick={() => setExteriorStyle(style)}
+                    key={item}
+                    onClick={() => toggleSelection(ground, item, setGround)}
                     className={`px-4 py-3 rounded-lg border-2 text-sm font-medium transition-all ${
-                      exteriorStyle === style
+                      ground.includes(item)
                         ? "border-blue-600 bg-blue-600 text-white"
                         : "border-gray-300 bg-white text-gray-900 hover:border-blue-400"
                     }`}
                   >
-                    {style}
+                    {item}
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Roof Style */}
+            {/* Mid Floor (Lantai 2) */}
             <div>
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Roof Style</h3>
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Mid Floor (Lantai 2)</h3>
               <div className="grid grid-cols-2 gap-3">
-                {(["Flat Roof", "Gable Roof", "Shed Roof", "Butterfly Roof"] as RoofStyle[]).map((style) => (
+                {popularDesigns.mid_floor_2.map((item) => (
                   <button
-                    key={style}
-                    onClick={() => setRoofStyle(style)}
+                    key={item}
+                    onClick={() => toggleSelection(mid2, item, setMid2)}
                     className={`px-4 py-3 rounded-lg border-2 text-sm font-medium transition-all ${
-                      roofStyle === style
+                      mid2.includes(item)
                         ? "border-blue-600 bg-blue-600 text-white"
                         : "border-gray-300 bg-white text-gray-900 hover:border-blue-400"
                     }`}
                   >
-                    {style}
+                    {item}
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Color Scheme */}
+            {/* Mid Floor (Lantai 3) - Conditional */}
+            {lantai === "3.5" && (
+              <div>
+                <h3 className="text-xl font-bold text-gray-900 mb-4">Mid Floor (Lantai 3) *</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  {popularDesigns.mid_floor_3_optional.map((item) => (
+                    <button
+                      key={item}
+                      onClick={() => toggleSelection(mid3, item, setMid3)}
+                      className={`px-4 py-3 rounded-lg border-2 text-sm font-medium transition-all ${
+                        mid3.includes(item)
+                          ? "border-blue-600 bg-blue-600 text-white"
+                          : "border-gray-300 bg-white text-gray-900 hover:border-blue-400"
+                      }`}
+                    >
+                      {item}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Top Floor */}
             <div>
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Color Scheme</h3>
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Top Floor</h3>
+              <div className="grid grid-cols-2 gap-3">
+                {popularDesigns.top_floor.map((item) => (
+                  <button
+                    key={item}
+                    onClick={() => toggleSelection(top, item, setTop)}
+                    className={`px-4 py-3 rounded-lg border-2 text-sm font-medium transition-all ${
+                      top.includes(item)
+                        ? "border-blue-600 bg-blue-600 text-white"
+                        : "border-gray-300 bg-white text-gray-900 hover:border-blue-400"
+                    }`}
+                  >
+                    {item}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Pilihan Style */}
+            <div>
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Pilihan Style</h3>
               <div className="grid grid-cols-3 gap-3">
-                {(["Neutral Tones", "Warm Earth", "Cool Blues"] as ColorScheme[]).map((scheme) => (
+                {(["Noir", "Light Concrete", "Terracota"] as Style[]).map((s) => (
                   <button
-                    key={scheme}
-                    onClick={() => setColorScheme(scheme)}
+                    key={s}
+                    onClick={() => setStyle(s)}
                     className={`px-4 py-3 rounded-lg border-2 text-sm font-medium transition-all ${
-                      colorScheme === scheme
+                      style === s
                         ? "border-blue-600 bg-blue-600 text-white"
                         : "border-gray-300 bg-white text-gray-900 hover:border-blue-400"
                     }`}
                   >
-                    {scheme}
+                    {s}
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Size Controls */}
-            <div>
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Size</h3>
-              <div className="space-y-4">
-                {/* Square Footage */}
-                <div>
-                  <div className="flex justify-between mb-2">
-                    <label className="text-gray-700 font-medium">Square Footage: {squareFootage} sq ft</label>
-                  </div>
-                  <input
-                    type="range"
-                    min="1200"
-                    max="4000"
-                    step="100"
-                    value={squareFootage}
-                    onChange={(e) => setSquareFootage(Number(e.target.value))}
-                    className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-blue-600"
-                  />
-                </div>
-
-                {/* Bedrooms */}
-                <div>
-                  <div className="flex justify-between mb-2">
-                    <label className="text-gray-700 font-medium">Bedrooms: {bedrooms}</label>
-                  </div>
-                  <input
-                    type="range"
-                    min="1"
-                    max="6"
-                    step="1"
-                    value={bedrooms}
-                    onChange={(e) => setBedrooms(Number(e.target.value))}
-                    className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-blue-600"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Estimated Price */}
+            {/* Estimasi Biaya */}
             <div className="bg-white rounded-lg p-6 border-2 border-gray-200">
-              <h3 className="text-lg font-bold text-gray-900 mb-2">Estimated Price</h3>
-              <p className="text-4xl font-bold text-blue-600">${estimatedPrice.toLocaleString()}</p>
-              <p className="text-sm text-gray-600 mt-2">*Base price includes standard finishes</p>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">Estimasi Biaya</h3>
+              <p className="text-4xl font-bold text-blue-600">{formatIDR(estimasiBiaya)}</p>
+              <p className="text-sm text-gray-600 mt-2">*Tidak termasuk pajak dan biaya notaris</p>
             </div>
           </div>
 
-          {/* Right Column - Preview and Configuration Summary */}
+          {/* Right Column - Preview and Summary */}
           <div className="space-y-6">
             {/* House Preview */}
             <div className="bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl p-12 flex items-center justify-center min-h-[300px]">
@@ -181,15 +262,15 @@ export function Configurator() {
                 <div className="flex flex-col items-center">
                   {/* Roof */}
                   <div
-                    className="w-0 h-0"
+                    className={`w-0 h-0 ${
+                      style === "Noir" ? "border-b-gray-900" :
+                      style === "Terracota" ? "border-b-orange-800" :
+                      "border-b-gray-600"
+                    }`}
                     style={{
                       borderLeft: '160px solid transparent',
                       borderRight: '160px solid transparent',
-                      borderBottom: `80px solid ${
-                        roofStyle === "Flat Roof" ? "#64748b" :
-                        roofStyle === "Butterfly Roof" ? "#64748b" :
-                        roofStyle === "Gable Roof" ? "#475569" : "#64748b"
-                      }`,
+                      borderBottom: '80px solid',
                     }}
                   />
 
@@ -198,9 +279,9 @@ export function Configurator() {
                     className="w-80 h-32 relative"
                     style={{
                       backgroundColor:
-                        colorScheme === "Cool Blues" ? "#cbd5e1" :
-                        colorScheme === "Warm Earth" ? "#d1d5db" :
-                        "#e5e7eb",
+                        style === "Noir" ? "#1f2937" :
+                        style === "Terracota" ? "#ea580c" :
+                        "#9ca3af",
                       marginTop: '-4px'
                     }}
                   >
@@ -217,25 +298,43 @@ export function Configurator() {
               </div>
             </div>
 
-            {/* Current Configuration */}
+            {/* Kombinasi Desain Pilihan Anda */}
             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Current Configuration</h3>
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Kombinasi Desain Pilihan Anda</h3>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
+                  <span className="text-gray-600">Jumlah lantai:</span>
+                  <span className="font-semibold text-gray-900">{lantai} Lantai</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Ground Floor:</span>
+                  <span className="font-semibold text-gray-900">{ground.join(", ") || "-"}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Mid Floor (Lantai 2):</span>
+                  <span className="font-semibold text-gray-900">{mid2.join(", ") || "-"}</span>
+                </div>
+                {lantai === "3.5" && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Mid Floor (Lantai 3) *:</span>
+                    <span className="font-semibold text-gray-900">{mid3.join(", ") || "-"}</span>
+                  </div>
+                )}
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Top Floor:</span>
+                  <span className="font-semibold text-gray-900">{top.join(", ") || "-"}</span>
+                </div>
+                <div className="flex justify-between">
                   <span className="text-gray-600">Style:</span>
-                  <span className="font-semibold text-gray-900">{exteriorStyle}</span>
+                  <span className="font-semibold text-gray-900">{style}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Roof:</span>
-                  <span className="font-semibold text-gray-900">{roofStyle}</span>
+                  <span className="text-gray-600">Luas Tanah:</span>
+                  <span className="font-semibold text-gray-900">{tanah_m2} m²</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Colors:</span>
-                  <span className="font-semibold text-gray-900">{colorScheme}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Size:</span>
-                  <span className="font-semibold text-gray-900">{squareFootage} sq ft, {bedrooms} bedrooms</span>
+                  <span className="text-gray-600">Luas Bangunan:</span>
+                  <span className="font-semibold text-gray-900">{luasBangunan} m²</span>
                 </div>
               </div>
 
@@ -244,7 +343,7 @@ export function Configurator() {
                 className="w-full mt-6"
                 size="lg"
               >
-                Request Consultation
+                Jadwalkan Konsultasi Sekarang!
               </Button>
             </div>
           </div>
