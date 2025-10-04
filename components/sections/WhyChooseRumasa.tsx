@@ -1,7 +1,6 @@
-import { getWhyChooseFromSheet } from "@/actions/sheets";
 import { QuickContactForm } from "@/components/QuickContactForm";
 
-const defaultReasons = [
+const reasons = [
   {
     id: "1",
     title: "Desain dan Pembangunan yang Cerdas & Terjamin",
@@ -22,8 +21,7 @@ const defaultReasons = [
   },
 ];
 
-export async function WhyChooseRumasa() {
-  let reasons = defaultReasons;
+export function WhyChooseRumasa() {
 
   return (
     <section id="why-choose-rumasa" className="py-16 px-4 sm:px-6 lg:px-8 bg-white">

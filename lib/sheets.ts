@@ -1,6 +1,5 @@
 import { google } from "googleapis";
 import { env } from "@/config/env";
-import type { ReasonItem } from "@/types";
 
 // Initialize Google Sheets API
 function getGoogleSheetsClient() {
@@ -34,14 +33,4 @@ export async function appendSheetData(range: string, values: unknown[][]): Promi
     console.error(`Error appending to sheet range ${range}:`, error);
     return false;
   }
-}
-
-// Parse ReasonItem from sheet row
-export function parseReasonItem(row: unknown[]): ReasonItem {
-  return {
-    id: String(row[0] || ""),
-    title: String(row[1] || ""),
-    subtitle: String(row[2] || ""),
-    badge: row[3] ? String(row[3]) : null,
-  };
 }
