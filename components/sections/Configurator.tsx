@@ -97,11 +97,9 @@ export function Configurator() {
   };
 
   const formatIDR = (amount: number) => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0,
-    }).format(amount);
+    // Manual formatting to avoid SSR/client hydration mismatch
+    const formatted = amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    return `Rp ${formatted}`;
   };
 
   return (
