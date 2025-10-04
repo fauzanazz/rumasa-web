@@ -14,11 +14,6 @@ export function Hero() {
           {heroCopy.subheadline}
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Link href="/konsultasi">
-            <Button size="lg" variant="primary">
-              {heroCopy.primary_cta}
-            </Button>
-          </Link>
           <ScrollButton targetId="popular-designs">
             {heroCopy.secondary_cta}
           </ScrollButton>
