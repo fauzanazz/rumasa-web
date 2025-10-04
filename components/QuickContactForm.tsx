@@ -30,12 +30,26 @@ export function QuickContactForm() {
 
       if (result.ok) {
         // Create WhatsApp message
-        const message = `Halo Rumasa! Saya ${formData.name} ingin berkonsultasi tentang rumah Rumasa.\n\nEmail: ${formData.email}\nTelepon: ${formData.phone}`;
-        const { url } = await createWhatsAppLink({});
+        const message = `Halo Rumasa! Saya ${formData.name} ingin berkonsultasi tentang rumah Rumasa.
 
-        // Redirect to WhatsApp with custom message
-        const whatsappUrl = url.split('?text=')[0] + '?text=' + encodeURIComponent(message);
-        window.open(whatsappUrl, '_blank');
+Email: ${formData.email}
+Telepon: ${formData.phone}`;
+
+        // Build WhatsApp URL directly
+        const whatsappPhone = '6282123747018'; // From env
+        const encodedMessage = encodeURIComponent(message);
+        const whatsappUrl = `https://wa.me/${whatsappPhone}?text=${encodedMessage}`;
+
+        console.log('Opening WhatsApp URL:', whatsappUrl);
+
+        // Open WhatsApp in new tab
+        const newWindow = window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+
+        if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+          // Popup blocked - try window.location
+          console.log('Popup blocked, using window.location');
+          window.location.href = whatsappUrl;
+        }
 
         // Reset form
         setFormData({ name: "", email: "", phone: "" });
