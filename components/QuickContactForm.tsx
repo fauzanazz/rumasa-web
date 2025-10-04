@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { saveQuickContact } from "@/actions/sheets";
+import { createWhatsAppLink } from "@/actions/whatsapp";
 
 export function QuickContactForm() {
   const [formData, setFormData] = useState({
@@ -8,11 +10,40 @@ export function QuickContactForm() {
     email: "",
     phone: "",
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
-    window.location.href = "/konsultasi";
+    setIsSubmitting(true);
+
+    try {
+      // Save to spreadsheet
+      const result = await saveQuickContact({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+      });
+
+      if (result.ok) {
+        // Create WhatsApp message
+        const message = `Halo Rumasa! Saya ${formData.name} ingin berkonsultasi tentang rumah Rumasa.\n\nEmail: ${formData.email}\nTelepon: ${formData.phone}`;
+        const { url } = await createWhatsAppLink({});
+
+        // Redirect to WhatsApp with custom message
+        const whatsappUrl = url.split('?text=')[0] + '?text=' + encodeURIComponent(message);
+        window.open(whatsappUrl, '_blank');
+
+        // Reset form
+        setFormData({ name: "", email: "", phone: "" });
+      } else {
+        alert('Gagal menyimpan data. Silakan coba lagi.');
+      }
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      alert('Terjadi kesalahan. Silakan coba lagi.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -70,9 +101,10 @@ export function QuickContactForm() {
 
         <button
           type="submit"
-          className="w-full bg-blue-600 text-white font-semibold py-4 px-6 rounded-lg hover:bg-blue-700 transition-colors"
+          disabled={isSubmitting}
+          className="w-full bg-blue-600 text-white font-semibold py-4 px-6 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
         >
-          Get Started
+          {isSubmitting ? "Mengirim..." : "Get Started"}
         </button>
       </form>
     </div>

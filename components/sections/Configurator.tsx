@@ -93,7 +93,10 @@ export function Configurator() {
   }, [lantai, ground, mid2, mid3, top, style]);
 
   const handleConsultation = () => {
-    window.location.href = "/konsultasi";
+    const element = document.getElementById("why-choose-rumasa");
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
   };
 
   const formatIDR = (amount: number) => {

@@ -115,3 +115,34 @@ export async function logCtaClick(details: {
     console.error("Error logging CTA click:", error);
   }
 }
+
+// Save quick contact form to sheet
+export async function saveQuickContact(data: {
+  name: string;
+  email: string;
+  phone: string;
+}): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const timestamp = new Date().toISOString();
+    const row = [
+      timestamp,
+      data.name,
+      data.email,
+      data.phone,
+      "Quick Contact Form", // source
+      "", // notes
+      "", // combo - not applicable for quick form
+    ];
+
+    const success = await appendSheetData("Leads!A2:G", [row]);
+
+    if (success) {
+      return { ok: true };
+    } else {
+      return { ok: false, error: "Failed to save to spreadsheet" };
+    }
+  } catch (error) {
+    console.error("Error saving quick contact:", error);
+    return { ok: false, error: "Server error occurred" };
+  }
+}

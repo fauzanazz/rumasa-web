@@ -17,22 +17,6 @@ function getGoogleSheetsClient() {
   return google.sheets({ version: "v4", auth });
 }
 
-// Read data from a specific range
-export async function readSheetRange(range: string): Promise<unknown[][]> {
-  try {
-    const sheets = getGoogleSheetsClient();
-    const response = await sheets.spreadsheets.values.get({
-      spreadsheetId: env.RUMASA_SHEET_ID,
-      range,
-    });
-
-    return (response.data.values as unknown[][]) || [];
-  } catch (error) {
-    console.error(`Error reading sheet range ${range}:`, error);
-    return [];
-  }
-}
-
 // Append data to a specific range
 export async function appendSheetData(range: string, values: unknown[][]): Promise<boolean> {
   try {
@@ -60,10 +44,4 @@ export function parseReasonItem(row: unknown[]): ReasonItem {
     subtitle: String(row[2] || ""),
     badge: row[3] ? String(row[3]) : null,
   };
-}
-
-// Helper to get all reasons from the sheet
-export async function getReasonsFromSheet(): Promise<ReasonItem[]> {
-  const rows = await readSheetRange("Reasons!A2:D");
-  return rows.map(parseReasonItem);
 }
