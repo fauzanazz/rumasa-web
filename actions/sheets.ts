@@ -1,42 +1,8 @@
 "use server";
 
-import { revalidateTag, unstable_cache } from "next/cache";
-import { getReasonsFromSheet, appendSheetData } from "@/lib/sheets";
-import { whyChooseStatic } from "@/config/copy";
-import type { ReasonItem, CombinationInput, ConsultationFormInput } from "@/types";
+import { appendSheetData } from "@/lib/sheets";
+import type { CombinationInput, ConsultationFormInput } from "@/types";
 
-// Get Why Choose reasons from sheet with 1-hour cache
-export const getWhyChooseFromSheet = unstable_cache(
-  async (): Promise<ReasonItem[]> => {
-    try {
-      const reasons = await getReasonsFromSheet();
-      // Fallback to static copy if sheet is empty or unavailable
-      if (reasons.length === 0) {
-        return whyChooseStatic.map((item, index) => ({
-          id: `static-${index}`,
-          title: item.title,
-          subtitle: item.subtitle,
-          badge: null,
-        }));
-      }
-      return reasons;
-    } catch (error) {
-      console.error("Error fetching reasons:", error);
-      // Return static fallback
-      return whyChooseStatic.map((item, index) => ({
-        id: `static-${index}`,
-        title: item.title,
-        subtitle: item.subtitle,
-        badge: null,
-      }));
-    }
-  },
-  ["why-choose-reasons"],
-  {
-    revalidate: 3600, // 1 hour
-    tags: ["reasons"],
-  }
-);
 
 // Save design combination to sheet
 export async function saveDesignCombinationToSheet(
