@@ -7,6 +7,14 @@ import { Button } from "@/components/ui/button";
 export function Navigation() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth", block: "start" });
+      setMobileMenuOpen(false);
+    }
+  };
+
   return (
     <nav className="bg-white shadow-sm sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -19,24 +27,27 @@ export function Navigation() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
-            <Link href="/desain" className="text-gray-700 hover:text-blue-600 transition-colors">
+            <button
+              onClick={() => scrollToSection("popular-designs")}
+              className="text-gray-700 hover:text-blue-600 transition-colors"
+            >
               Desain
-            </Link>
-            <Link
-              href="/konsultasi"
+            </button>
+            <button
+              onClick={() => scrollToSection("configurator")}
               className="text-gray-700 hover:text-blue-600 transition-colors"
             >
               Kebutuhan Ruang
-            </Link>
-            <Link
-              href="/konsultasi"
+            </button>
+            <button
+              onClick={() => scrollToSection("why-choose-rumasa")}
               className="text-gray-700 hover:text-blue-600 transition-colors"
             >
               Tentang Rumasa
-            </Link>
-            <Link href="/konsultasi">
+            </button>
+            <button onClick={() => scrollToSection("why-choose-rumasa")}>
               <Button variant="primary">Contact Us</Button>
-            </Link>
+            </button>
           </div>
 
           {/* Mobile menu button */}
@@ -67,20 +78,30 @@ export function Navigation() {
         {/* Mobile Navigation */}
         {mobileMenuOpen && (
           <div className="md:hidden pb-4 space-y-2">
-            <Link
-              href="/desain"
-              className="block px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md"
-              onClick={() => setMobileMenuOpen(false)}
+            <button
+              onClick={() => scrollToSection("popular-designs")}
+              className="block w-full text-left px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md"
             >
               Desain
-            </Link>
-            <Link
-              href="/konsultasi"
-              className="block px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md"
-              onClick={() => setMobileMenuOpen(false)}
+            </button>
+            <button
+              onClick={() => scrollToSection("configurator")}
+              className="block w-full text-left px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md"
             >
-              Konsultasi
-            </Link>
+              Kebutuhan Ruang
+            </button>
+            <button
+              onClick={() => scrollToSection("why-choose-rumasa")}
+              className="block w-full text-left px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md"
+            >
+              Tentang Rumasa
+            </button>
+            <button
+              onClick={() => scrollToSection("why-choose-rumasa")}
+              className="block w-full text-left px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md"
+            >
+              Contact Us
+            </button>
           </div>
         )}
       </div>
