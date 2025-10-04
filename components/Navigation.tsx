@@ -45,9 +45,12 @@ export function Navigation() {
             >
               Tentang Rumasa
             </button>
-            <button onClick={() => scrollToSection("why-choose-rumasa")}>
-              <Button variant="primary">Contact Us</Button>
-            </button>
+            <Button
+              variant="primary"
+              onClick={() => scrollToSection("why-choose-rumasa")}
+            >
+              Contact Us
+            </Button>
           </div>
 
           {/* Mobile menu button */}
