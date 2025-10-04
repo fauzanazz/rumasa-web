@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { popularDesigns } from "@/config/copy";
+import { popularDesigns, configuratorColors } from "@/config/copy";
 
 type Lantai = "2.5" | "3.5";
 type Style = "Noir" | "Light Concrete" | "Terracota";
@@ -29,26 +29,26 @@ const PRICE_PER_M2 = 15000000; // IDR 15 juta per m²
 
 export function Configurator() {
   const [lantai, setLantai] = useState<Lantai>("2.5");
-  const [ground, setGround] = useState<string[]>([]);
-  const [mid2, setMid2] = useState<string[]>([]);
-  const [mid3, setMid3] = useState<string[]>([]);
-  const [top, setTop] = useState<string[]>([]);
+  const [ground, setGround] = useState<string>("");
+  const [mid2, setMid2] = useState<string>("");
+  const [mid3, setMid3] = useState<string>("");
+  const [top, setTop] = useState<string>("");
   const [style, setStyle] = useState<Style>("Noir");
   const [luasBangunan, setLuasBangunan] = useState(0);
   const [estimasiBiaya, setEstimasiBiaya] = useState(0);
 
   const tanah_m2 = 49;
 
-  // Toggle selection helper
-  const toggleSelection = (
-    list: string[],
+  // Single selection helper
+  const selectOption = (
+    current: string,
     item: string,
-    setter: React.Dispatch<React.SetStateAction<string[]>>
+    setter: React.Dispatch<React.SetStateAction<string>>
   ) => {
-    if (list.includes(item)) {
-      setter(list.filter((i) => i !== item));
+    if (current === item) {
+      setter(""); // Deselect if clicking the same item
     } else {
-      setter([...list, item]);
+      setter(item); // Select the new item
     }
   };
 
@@ -57,26 +57,24 @@ export function Configurator() {
     let totalArea = 0;
 
     // Add ground floor area
-    ground.forEach((module) => {
-      totalArea += MODULE_SIZES[module] || 0;
-    });
+    if (ground) {
+      totalArea += MODULE_SIZES[ground] || 0;
+    }
 
     // Add mid floor 2 area
-    mid2.forEach((module) => {
-      totalArea += MODULE_SIZES[module] || 0;
-    });
+    if (mid2) {
+      totalArea += MODULE_SIZES[mid2] || 0;
+    }
 
     // Add mid floor 3 area if 3.5 lantai
-    if (lantai === "3.5") {
-      mid3.forEach((module) => {
-        totalArea += MODULE_SIZES[module] || 0;
-      });
+    if (lantai === "3.5" && mid3) {
+      totalArea += MODULE_SIZES[mid3] || 0;
     }
 
     // Add top floor area
-    top.forEach((module) => {
-      totalArea += MODULE_SIZES[module] || 0;
-    });
+    if (top) {
+      totalArea += MODULE_SIZES[top] || 0;
+    }
 
     setLuasBangunan(totalArea);
 
@@ -124,8 +122,8 @@ export function Configurator() {
                   onClick={() => setLantai("2.5")}
                   className={`px-4 py-3 rounded-lg border-2 text-sm font-medium transition-all ${
                     lantai === "2.5"
-                      ? "border-blue-600 bg-blue-600 text-white"
-                      : "border-gray-300 bg-white text-gray-900 hover:border-blue-400"
+                      ? `${configuratorColors.selected} ${configuratorColors.selectedHover} text-white`
+                      : `${configuratorColors.unselected} ${configuratorColors.unselectedHover}`
                   }`}
                 >
                   2,5 Lantai
@@ -134,8 +132,8 @@ export function Configurator() {
                   onClick={() => setLantai("3.5")}
                   className={`px-4 py-3 rounded-lg border-2 text-sm font-medium transition-all ${
                     lantai === "3.5"
-                      ? "border-blue-600 bg-blue-600 text-white"
-                      : "border-gray-300 bg-white text-gray-900 hover:border-blue-400"
+                      ? `${configuratorColors.selected} ${configuratorColors.selectedHover} text-white`
+                      : `${configuratorColors.unselected} ${configuratorColors.unselectedHover}`
                   }`}
                 >
                   3,5 Lantai *
@@ -150,11 +148,11 @@ export function Configurator() {
                 {popularDesigns.ground_floor.map((item) => (
                   <button
                     key={item}
-                    onClick={() => toggleSelection(ground, item, setGround)}
+                    onClick={() => selectOption(ground, item, setGround)}
                     className={`px-4 py-3 rounded-lg border-2 text-sm font-medium transition-all ${
-                      ground.includes(item)
-                        ? "border-blue-600 bg-blue-600 text-white"
-                        : "border-gray-300 bg-white text-gray-900 hover:border-blue-400"
+                      ground === item
+                        ? `${configuratorColors.selected} ${configuratorColors.selectedHover} text-white`
+                        : `${configuratorColors.unselected} ${configuratorColors.unselectedHover}`
                     }`}
                   >
                     {item}
@@ -170,11 +168,11 @@ export function Configurator() {
                 {popularDesigns.mid_floor_2.map((item) => (
                   <button
                     key={item}
-                    onClick={() => toggleSelection(mid2, item, setMid2)}
+                    onClick={() => selectOption(mid2, item, setMid2)}
                     className={`px-4 py-3 rounded-lg border-2 text-sm font-medium transition-all ${
-                      mid2.includes(item)
-                        ? "border-blue-600 bg-blue-600 text-white"
-                        : "border-gray-300 bg-white text-gray-900 hover:border-blue-400"
+                      mid2 === item
+                        ? `${configuratorColors.selected} ${configuratorColors.selectedHover} text-white`
+                        : `${configuratorColors.unselected} ${configuratorColors.unselectedHover}`
                     }`}
                   >
                     {item}
@@ -191,11 +189,11 @@ export function Configurator() {
                   {popularDesigns.mid_floor_3_optional.map((item) => (
                     <button
                       key={item}
-                      onClick={() => toggleSelection(mid3, item, setMid3)}
+                      onClick={() => selectOption(mid3, item, setMid3)}
                       className={`px-4 py-3 rounded-lg border-2 text-sm font-medium transition-all ${
-                        mid3.includes(item)
-                          ? "border-blue-600 bg-blue-600 text-white"
-                          : "border-gray-300 bg-white text-gray-900 hover:border-blue-400"
+                        mid3 === item
+                          ? `${configuratorColors.selected} ${configuratorColors.selectedHover} text-white`
+                          : `${configuratorColors.unselected} ${configuratorColors.unselectedHover}`
                       }`}
                     >
                       {item}
@@ -212,11 +210,11 @@ export function Configurator() {
                 {popularDesigns.top_floor.map((item) => (
                   <button
                     key={item}
-                    onClick={() => toggleSelection(top, item, setTop)}
+                    onClick={() => selectOption(top, item, setTop)}
                     className={`px-4 py-3 rounded-lg border-2 text-sm font-medium transition-all ${
-                      top.includes(item)
-                        ? "border-blue-600 bg-blue-600 text-white"
-                        : "border-gray-300 bg-white text-gray-900 hover:border-blue-400"
+                      top === item
+                        ? `${configuratorColors.selected} ${configuratorColors.selectedHover} text-white`
+                        : `${configuratorColors.unselected} ${configuratorColors.unselectedHover}`
                     }`}
                   >
                     {item}
@@ -235,8 +233,8 @@ export function Configurator() {
                     onClick={() => setStyle(s)}
                     className={`px-4 py-3 rounded-lg border-2 text-sm font-medium transition-all ${
                       style === s
-                        ? "border-blue-600 bg-blue-600 text-white"
-                        : "border-gray-300 bg-white text-gray-900 hover:border-blue-400"
+                        ? `${configuratorColors.selected} ${configuratorColors.selectedHover} text-white`
+                        : `${configuratorColors.unselected} ${configuratorColors.unselectedHover}`
                     }`}
                   >
                     {s}
@@ -308,21 +306,21 @@ export function Configurator() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Ground Floor:</span>
-                  <span className="font-semibold text-gray-900">{ground.join(", ") || "-"}</span>
+                  <span className="font-semibold text-gray-900">{ground || "-"}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Mid Floor (Lantai 2):</span>
-                  <span className="font-semibold text-gray-900">{mid2.join(", ") || "-"}</span>
+                  <span className="font-semibold text-gray-900">{mid2 || "-"}</span>
                 </div>
                 {lantai === "3.5" && (
                   <div className="flex justify-between">
                     <span className="text-gray-600">Mid Floor (Lantai 3) *:</span>
-                    <span className="font-semibold text-gray-900">{mid3.join(", ") || "-"}</span>
+                    <span className="font-semibold text-gray-900">{mid3 || "-"}</span>
                   </div>
                 )}
                 <div className="flex justify-between">
                   <span className="text-gray-600">Top Floor:</span>
-                  <span className="font-semibold text-gray-900">{top.join(", ") || "-"}</span>
+                  <span className="font-semibold text-gray-900">{top || "-"}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Style:</span>

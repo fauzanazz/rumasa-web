@@ -113,3 +113,14 @@ export const footerCopy = {
     "Rumasa dapat menyesuaikan spesifikasi sesuai regulasi & ketersediaan material.",
   company: "© Rumasa",
 };
+
+export const configuratorColors = {
+  // Primary button color when selected
+  selected: "bg-[#667eea]",
+  // Hover color for selected buttons
+  selectedHover: "hover:bg-[#667eea]",
+  // Unselected button styles
+  unselected: "border-gray-100 bg-white text-gray-900",
+  // Hover color for unselected buttons
+  unselectedHover: "hover:border-gray-100",
+};
