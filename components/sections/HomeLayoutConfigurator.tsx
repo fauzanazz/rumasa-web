@@ -189,11 +189,6 @@ const FloorLayer = memo(function FloorLayer({
     }
   };
 
-  const activeOption = options[currentIndex] ?? options[0];
-  if (!activeOption) {
-    return null;
-  }
-
   const getPosition = useCallback(
     (idx: number): SlidePosition => {
       if (!hasMultiple) return "current";
@@ -213,6 +208,11 @@ const FloorLayer = memo(function FloorLayer({
     },
     [currentIndex, hasMultiple, len],
   );
+
+  const activeOption = options[currentIndex] ?? options[0];
+  if (!activeOption) {
+    return null;
+  }
 
   // Transform calculator (isometric slide)
   // We keep the same DOM nodes alive (stable keys + memoized component) and only
