@@ -55,6 +55,8 @@ interface FloorLayerProps {
   zoom: number;
 }
 
+type SlidePosition = "current" | "prev" | "next" | "hidden";
+
 const FloorLayer = memo(function FloorLayer({
   title,
   options,
@@ -66,11 +68,7 @@ const FloorLayer = memo(function FloorLayer({
 }: FloorLayerProps) {
   const layerRef = useRef<HTMLDivElement>(null);
 
-  // Visual state (decoupled from parent to avoid re-rendering mid animation)
-  const [displayIndex, setDisplayIndex] = useState(currentIndex);
-  const [animating, setAnimating] = useState(false);
-  const [direction, setDirection] = useState<"left" | "right">("right");
-  const pendingIndexRef = useRef<number | null>(null);
+  const [isTransitioning, setIsTransitioning] = useState(false);
   const timeoutRef = useRef<number | null>(null);
 
   // Preload once
@@ -82,21 +80,8 @@ const FloorLayer = memo(function FloorLayer({
     });
   }, [options]);
 
-  // If parent changes index externally (rare), sync when NOT animating
-  useEffect(() => {
-    if (!animating && displayIndex !== currentIndex) {
-      setDisplayIndex(currentIndex);
-    }
-  }, [currentIndex, animating, displayIndex]);
 
-  // Compute neighbors from the visual (display) index only.
   const len = options.length;
-  const prevIdx = (displayIndex - 1 + len) % len;
-  const nextIdx = (displayIndex + 1) % len;
-
-  const currentOption = options[displayIndex];
-  const prevOption = options[prevIdx];
-  const nextOption = options[nextIdx];
   const hasMultiple = len > 1;
   const zoomScale = zoom / 100;
   const widthPercent = zoomScale * 100;
@@ -110,42 +95,38 @@ const FloorLayer = memo(function FloorLayer({
     transition: "width 300ms ease, margin 300ms ease",
   };
 
-  // Start a buffered animation; commit parent AFTER animation end
-  const startAnimTo = (dir: "left" | "right") => {
-    if (!hasMultiple || animating) return;
-    setDirection(dir);
-    setAnimating(true);
-
-    // target visual index
-    const target =
-      dir === "left" ? (displayIndex - 1 + len) % len : (displayIndex + 1) % len;
-    pendingIndexRef.current = target;
-
-    // let CSS animation run; commit after
+  const scheduleTransitionReset = useCallback(() => {
     if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
     timeoutRef.current = window.setTimeout(() => {
-      if (pendingIndexRef.current !== null) {
-        const committed = pendingIndexRef.current;
-        pendingIndexRef.current = null;
-
-        // commit visual index first (so neighbors realign)
-        setDisplayIndex(committed);
-
-        // now notify parent (totals/cost update AFTER motion completes)
-        if (dir === "left") onPrev();
-        else onNext();
-      }
-
-      setAnimating(false);
+      setIsTransitioning(false);
+      timeoutRef.current = null;
     }, ANIM_MS) as unknown as number;
-  };
+  }, []);
 
-  // Clean up timer
+  const startTransition = useCallback(
+    (dir: "prev" | "next") => {
+      if (!hasMultiple || isTransitioning) return;
+      setIsTransitioning(true);
+      scheduleTransitionReset();
+      if (dir === "prev") onPrev();
+      else onNext();
+    },
+    [hasMultiple, isTransitioning, onNext, onPrev, scheduleTransitionReset],
+  );
+
   useEffect(() => {
     return () => {
       if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
     };
   }, []);
+
+  useEffect(() => {
+    if (!hasMultiple && isTransitioning) {
+      if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
+      setIsTransitioning(false);
+      timeoutRef.current = null;
+    }
+  }, [hasMultiple, isTransitioning]);
 
   // Touch swipe (kept), no wheel at all
   useEffect(() => {
@@ -163,14 +144,14 @@ const FloorLayer = memo(function FloorLayer({
       active = true;
     };
     const onTouchMove = (e: TouchEvent) => {
-      if (!active || animating) return;
+      if (!active || isTransitioning) return;
       const t = e.touches[0];
       const dx = t.clientX - startX;
       const dy = t.clientY - startY;
       if (Math.abs(dx) > 28 && Math.abs(dx) > Math.abs(dy)) {
         active = false;
-        if (dx < 0) startAnimTo("right");
-        else startAnimTo("left");
+        if (dx < 0) startTransition("next");
+        else startTransition("prev");
       }
     };
     const onTouchEnd = () => {
@@ -186,87 +167,121 @@ const FloorLayer = memo(function FloorLayer({
       el.removeEventListener("touchmove", onTouchMove);
       el.removeEventListener("touchend", onTouchEnd);
     };
-  }, [animating, hasMultiple, displayIndex, len]);
+  }, [hasMultiple, isTransitioning, startTransition]);
 
   // Keyboard support (kept)
   const onKeyDown = (e: React.KeyboardEvent) => {
-    if (!hasMultiple || animating) return;
+    if (!hasMultiple || isTransitioning) return;
     if (e.key === "ArrowLeft") {
       e.preventDefault();
-      startAnimTo("left");
+      startTransition("prev");
     } else if (e.key === "ArrowRight") {
       e.preventDefault();
-      startAnimTo("right");
+      startTransition("next");
     } else if (e.key === "Home") {
       e.preventDefault();
-      if (displayIndex === 0) return;
-      startAnimTo("left"); // user can tap-hold; we keep simple behavior
+      if (currentIndex === 0) return;
+      startTransition("prev");
     } else if (e.key === "End") {
       e.preventDefault();
-      if (displayIndex === len - 1) return;
-      startAnimTo("right");
+      if (currentIndex === len - 1) return;
+      startTransition("next");
     }
   };
 
+  const activeOption = options[currentIndex] ?? options[0];
+  if (!activeOption) {
+    return null;
+  }
+
+  const getPosition = useCallback(
+    (idx: number): SlidePosition => {
+      if (!hasMultiple) return "current";
+      if (idx === currentIndex) return "current";
+
+      const prevIdx = (currentIndex - 1 + len) % len;
+      const nextIdx = (currentIndex + 1) % len;
+
+      if (idx === prevIdx && idx === nextIdx) {
+        // two-item carousel: treat the sibling as a single preview
+        return "next";
+      }
+
+      if (idx === prevIdx) return "prev";
+      if (idx === nextIdx) return "next";
+      return "hidden";
+    },
+    [currentIndex, hasMultiple, len],
+  );
+
   // Transform calculator (isometric slide)
-  const activeSlideStyle = (pos: "prev" | "current" | "next") => {
+  // We keep the same DOM nodes alive (stable keys + memoized component) and only
+  // tweak their transforms/filters. React diffs those style props without
+  // remounting, so the browser interpolates the values via CSS transitions and
+  // the preview appears to glide rather than flash.
+  const activeSlideStyle = (position: SlidePosition): CSSProperties => {
     const previewFilter = "grayscale(70%) brightness(0.7)";
-    const transition = animating ? SLIDE_TRANSITION : "none";
+    const transition = isTransitioning ? SLIDE_TRANSITION : "none";
 
     if (!hasMultiple) {
       return {
         transform: "translate3d(0,0,0) scale(1)",
-        opacity: pos === "current" ? 1 : 0,
-        zIndex: pos === "current" ? 3 : 0,
-        filter: pos === "current" ? "none" : previewFilter,
+        opacity: 1,
+        zIndex: 3,
+        filter: "none",
         transition,
+        transformOrigin: "center center",
+        willChange: "transform, opacity",
+        pointerEvents: "auto",
       };
     }
 
-    const slideOut =
-      animating && // animation in progress
-      ((direction === "left" && pos === "current") ||
-        (direction === "right" && pos === "current"));
-
-    if (pos === "current") {
-      return {
-        transform: slideOut
-          ? direction === "left"
-            ? "translate3d(60%,-30%,0) scale(0.85)"
-            : "translate3d(-60%,30%,0) scale(0.85)"
-          : "translate3d(0,0,0) scale(1)",
-        opacity: slideOut ? 0.35 : 1,
-        zIndex: slideOut ? 2 : 3,
-        filter: slideOut ? previewFilter : "none",
-        transition,
-      };
+    switch (position) {
+      case "current":
+        return {
+          transform: "translate3d(0,0,0) scale(1)",
+          opacity: 1,
+          zIndex: 4,
+          filter: "none",
+          transition,
+          transformOrigin: "center center",
+          willChange: "transform, opacity",
+          pointerEvents: "auto",
+        };
+      case "prev":
+        return {
+          transform: "translate3d(-60%,30%,0) scale(0.85)",
+          opacity: 0.35,
+          zIndex: 2,
+          filter: previewFilter,
+          transition,
+          transformOrigin: "center center",
+          willChange: "transform, opacity",
+          pointerEvents: "none",
+        };
+      case "next":
+        return {
+          transform: "translate3d(60%,-30%,0) scale(0.85)",
+          opacity: 0.35,
+          zIndex: 2,
+          filter: previewFilter,
+          transition,
+          transformOrigin: "center center",
+          willChange: "transform, opacity",
+          pointerEvents: "none",
+        };
+      default:
+        return {
+          transform: "translate3d(0,25%, -140px) scale(0.7)",
+          opacity: 0,
+          zIndex: 1,
+          filter: previewFilter,
+          transition,
+          transformOrigin: "center center",
+          willChange: "transform, opacity",
+          pointerEvents: "none",
+        };
     }
-
-    if (pos === "prev") {
-      // when moving left, prev comes in; otherwise it sits as preview
-      const comingIn = animating && direction === "left";
-      return {
-        transform: comingIn
-          ? "translate3d(0,0,0) scale(1)"
-          : "translate3d(-60%,30%,0) scale(0.85)",
-        opacity: comingIn ? 1 : 0.3,
-        zIndex: comingIn ? 3 : 2,
-        filter: comingIn ? "none" : previewFilter,
-        transition,
-      };
-    }
-
-    // next
-    const comingIn = animating && direction === "right";
-    return {
-      transform: comingIn
-        ? "translate3d(0,0,0) scale(1)"
-        : "translate3d(60%,-30%,0) scale(0.85)",
-      opacity: comingIn ? 1 : 0.3,
-      zIndex: comingIn ? 3 : 2,
-      filter: comingIn ? "none" : previewFilter,
-      transition,
-    };
   };
 
   // Image component with stable node (no changing key)
@@ -314,42 +329,34 @@ const FloorLayer = memo(function FloorLayer({
         className="relative w-full overflow-hidden"
         style={{ perspective: "1500px" }}
       >
-        {/* Prev preview */}
-        {hasMultiple && (
-          <div
-            className="absolute inset-0 pointer-events-none will-change-transform"
-            style={activeSlideStyle("prev")}
-            aria-hidden="true"
-          >
-            <IsoImage option={prevOption} />
-          </div>
-        )}
-
-        {/* Current */}
-        <div
-          className="relative will-change-transform"
-          style={activeSlideStyle("current")}
-        >
-          <IsoImage option={currentOption} eager />
+        <div className="pointer-events-none opacity-0">
+          <IsoImage option={activeOption} eager />
         </div>
+        {options.map((option, idx) => {
+          const position = getPosition(idx);
+          const style = activeSlideStyle(position);
+          const isCurrent = position === "current";
 
-        {/* Next preview */}
-        {hasMultiple && (
-          <div
-            className="absolute inset-0 pointer-events-none will-change-transform"
-            style={activeSlideStyle("next")}
-            aria-hidden="true"
-          >
-            <IsoImage option={nextOption} />
-          </div>
-        )}
+          return (
+            <div
+              key={option.id}
+              className="absolute inset-0 flex items-center justify-center"
+              style={style}
+              aria-hidden={!isCurrent}
+            >
+              <div className="w-full">
+                <IsoImage option={option} eager={isCurrent} />
+              </div>
+            </div>
+          );
+        })}
 
         {/* Arrows */}
         {hasMultiple && (
           <>
             <button
-              onClick={() => startAnimTo("left")}
-              disabled={animating}
+              onClick={() => startTransition("prev")}
+              disabled={isTransitioning}
               className="absolute top-1/2 -translate-y-1/2 rounded-full bg-white/95 hover:bg-white shadow-2xl transition-all duration-300 flex items-center justify-center text-gray-800 opacity-0 group-hover:opacity-100 hover:scale-110 z-20 disabled:opacity-50 disabled:cursor-not-allowed focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
               style={{ left: "16.66%", width: "min(10vw, 10vh)", height: "min(10vw, 10vh)", padding: "min(2vw, 2vh)" }}
               aria-label={`Sebelumnya: ${title}`}
@@ -360,8 +367,8 @@ const FloorLayer = memo(function FloorLayer({
             </button>
 
             <button
-              onClick={() => startAnimTo("right")}
-              disabled={animating}
+              onClick={() => startTransition("next")}
+              disabled={isTransitioning}
               className="absolute top-1/2 -translate-y-1/2 rounded-full bg-white/95 hover:bg-white shadow-2xl transition-all duration-300 flex items-center justify-center text-gray-800 opacity-0 group-hover:opacity-100 hover:scale-110 z-20 disabled:opacity-50 disabled:cursor-not-allowed focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
               style={{ left: "83.33%", width: "min(10vw, 10vh)", height: "min(10vw, 10vh)", padding: "min(2vw, 2vh)" }}
               aria-label={`Berikutnya: ${title}`}
@@ -375,8 +382,8 @@ const FloorLayer = memo(function FloorLayer({
 
         {/* Label */}
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur-sm px-5 py-2 rounded-full shadow-lg z-20">
-          <p className="font-bold text-gray-900 text-sm">{currentOption.name}</p>
-          <p className="text-xs text-gray-600 text-center">{currentOption.size} m² • {title}</p>
+          <p className="font-bold text-gray-900 text-sm">{activeOption.name}</p>
+          <p className="text-xs text-gray-600 text-center">{activeOption.size} m² • {title}</p>
         </div>
 
         {/* Indicators (read-only) */}

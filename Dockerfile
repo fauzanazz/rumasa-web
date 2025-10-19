@@ -28,7 +28,7 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Copy public assets if they exist
-# COPY --from=builder /app/public ./public 2>/dev/null || true
+COPY --from=builder /app/public ./public 2>/dev/null || true
 
 # Set the correct permission for prerender cache
 RUN mkdir .next
