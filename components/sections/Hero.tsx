@@ -1,14 +1,17 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ScrollButton } from "@/components/ScrollButton";
 import { heroCopy } from "@/config/copy";
 
 const carouselImages = [
-  'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=2000&q=80',
-  'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=2000&q=80',
-  'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=2000&q=80',
-  'https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?auto=format&fit=crop&w=2000&q=80',
+  '/hero/1_upscale01.png',
+  '/hero/3_upscale01.png',
+  '/hero/4_upscale01.png',
+  '/hero/5_upscale01.png',
+  '/hero/7_upscale01.png',
+  '/hero/11_upscale01.png',
+  '/hero/Scene1_upscale01.png',
+  '/hero/Scene2_upscale01.png',
 ];
 
 export function Hero() {

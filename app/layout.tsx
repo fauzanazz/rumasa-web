@@ -8,6 +8,9 @@ export const metadata: Metadata = {
   description:
     "Kenyamanan ruang tinggal setiap orang berbeda. Rumasa menyediakan hingga 300 kombinasi denah agar ruang hidup Anda pas—sekarang dan nanti.",
   keywords: ["rumah", "desain rumah", "custom home", "modular home", "rumasa"],
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({
