@@ -71,15 +71,6 @@ const FloorLayer = memo(function FloorLayer({
   const [isTransitioning, setIsTransitioning] = useState(false);
   const timeoutRef = useRef<number | null>(null);
 
-  // Preload once
-  useEffect(() => {
-    options.forEach((o) => {
-      const img = new Image();
-      img.decoding = "async";
-      img.src = o.image;
-    });
-  }, [options]);
-
 
   const len = options.length;
   const hasMultiple = len > 1;
@@ -285,7 +276,7 @@ const FloorLayer = memo(function FloorLayer({
   };
 
   // Image component with stable node (no changing key)
-  const IsoImage = ({ option, eager = false }: { option: FloorOption; eager?: boolean }) => {
+  const IsoImage = ({ option }: { option: FloorOption }) => {
     const [err, setErr] = useState(false);
     if (err) {
       return (
@@ -306,7 +297,7 @@ const FloorLayer = memo(function FloorLayer({
         src={option.image}
         alt={option.name}
         className="w-full h-auto select-none"
-        loading={eager ? "eager" : "lazy"}
+        loading="eager"
         decoding="async"
         draggable={false}
         onError={() => setErr(true)}
@@ -330,7 +321,7 @@ const FloorLayer = memo(function FloorLayer({
         style={{ perspective: "1500px" }}
       >
         <div className="pointer-events-none opacity-0">
-          <IsoImage option={activeOption} eager />
+          <IsoImage option={activeOption} />
         </div>
         {options.map((option, idx) => {
           const position = getPosition(idx);
@@ -345,7 +336,7 @@ const FloorLayer = memo(function FloorLayer({
               aria-hidden={!isCurrent}
             >
               <div className="w-full">
-                <IsoImage option={option} eager={isCurrent} />
+                <IsoImage option={option} />
               </div>
             </div>
           );
@@ -381,9 +372,13 @@ const FloorLayer = memo(function FloorLayer({
         )}
 
         {/* Label */}
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur-sm px-5 py-2 rounded-full shadow-lg z-20">
-          <p className="font-bold text-gray-900 text-sm">{activeOption.name}</p>
-          <p className="text-xs text-gray-600 text-center">{activeOption.size} m² • {title}</p>
+        <div className="absolute bottom-3 left-3 max-w-[220px] bg-white/90 backdrop-blur-sm px-3 py-2 rounded-xl shadow-md z-20 md:bottom-4 md:left-4 md:max-w-none md:bg-white/95 md:px-5 md:py-2 md:rounded-full md:shadow-lg">
+          <p className="font-semibold text-gray-900 text-xs leading-tight text-left md:font-bold md:text-sm md:text-left">
+            {activeOption.name}
+          </p>
+          <p className="mt-0.5 text-[11px] text-gray-600 text-left md:mt-0 md:text-xs md:text-left">
+            {activeOption.size} m² • {title}
+          </p>
         </div>
 
         {/* Indicators (read-only) */}
@@ -412,6 +407,23 @@ export function HomeLayoutConfigurator() {
 
   const zoomScale = zoom / 100;
   const tanah_m2 = 49;
+
+  // Preload all images globally on mount
+  useEffect(() => {
+    const allOptions = [
+      ...GROUND_FLOOR_OPTIONS,
+      ...MID_FLOOR_2_OPTIONS,
+      ...MID_FLOOR_3_OPTIONS,
+      ...TOP_FLOOR_OPTIONS,
+    ];
+
+    allOptions.forEach((option) => {
+      const img = new Image();
+      img.decoding = "async";
+      img.fetchPriority = "high";
+      img.src = option.image;
+    });
+  }, []);
 
   // Get current selections
   const groundSelection = GROUND_FLOOR_OPTIONS[groundIndex];
@@ -659,11 +671,6 @@ export function HomeLayoutConfigurator() {
             </Button>
           </div>
         </div>
-
-        {/* Helper Text */}
-        <p className="text-center text-sm text-gray-500 mt-6 px-4">
-          💡 Tip: Arahkan kursor ke setiap lantai dan klik panah untuk mengubah pilihan. Pilih Small, Medium, atau Large untuk mengatur ukuran tampilan.
-        </p>
       </div>
     </section>
   );
