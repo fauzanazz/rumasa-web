@@ -7,8 +7,8 @@ export default function HomePage() {
   return (
     <>
       <Hero />
-      <PopularDesigns />
       <HomeLayoutConfigurator />
+      <PopularDesigns />
       <WhyChooseRumasa />
     </>
   );

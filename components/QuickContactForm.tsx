@@ -3,6 +3,9 @@
 import { useState } from "react";
 import { saveQuickContact } from "@/actions/sheets";
 import { createWhatsAppLink } from "@/actions/whatsapp";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { ERROR_MESSAGES, SUCCESS_MESSAGES } from "@/constants";
 
 export function QuickContactForm() {
   const [formData, setFormData] = useState({
@@ -53,14 +56,14 @@ Telepon: ${formData.phone}`;
 
         // Reset form
         setFormData({ name: "", email: "", phone: "" });
-        alert('Data berhasil disimpan! Membuka WhatsApp...');
+        alert(SUCCESS_MESSAGES.FORM_SUBMITTED + ' Membuka WhatsApp...');
       } else {
         console.error('Failed to save:', result.error);
-        alert(`Gagal menyimpan data: ${result.error || 'Silakan coba lagi.'}`);
+        alert(`Gagal menyimpan data: ${result.error || ERROR_MESSAGES.SUBMISSION}`);
       }
     } catch (error) {
       console.error('Error submitting form:', error);
-      alert(`Terjadi kesalahan: ${error instanceof Error ? error.message : 'Silakan coba lagi.'}`);
+      alert(`Terjadi kesalahan: ${error instanceof Error ? error.message : ERROR_MESSAGES.GENERIC}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -74,7 +77,8 @@ Telepon: ${formData.phone}`;
   };
 
   return (
-    <div className="bg-blue-50 rounded-2xl p-8 lg:p-12">
+    <ErrorBoundary>
+      <div className="bg-[#0d3451]/5 rounded-2xl p-8 lg:p-12">
       <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
         Ingin Punya Rumah dari Rumasa ?
       </h3>
@@ -91,7 +95,7 @@ Telepon: ${formData.phone}`;
             value={formData.name}
             onChange={handleChange}
             required
-            className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none bg-white placeholder:text-gray-400 text-gray-900 font-medium shadow-sm"
+            className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:ring-2 focus:ring-[#0d3451] focus:border-[#0d3451] outline-none bg-white placeholder:text-gray-400 text-gray-900 font-medium shadow-sm"
           />
         </div>
 
@@ -103,7 +107,7 @@ Telepon: ${formData.phone}`;
             value={formData.email}
             onChange={handleChange}
             required
-            className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none bg-white placeholder:text-gray-400 text-gray-900 font-medium shadow-sm"
+            className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:ring-2 focus:ring-[#0d3451] focus:border-[#0d3451] outline-none bg-white placeholder:text-gray-400 text-gray-900 font-medium shadow-sm"
           />
         </div>
 
@@ -115,18 +119,26 @@ Telepon: ${formData.phone}`;
             value={formData.phone}
             onChange={handleChange}
             required
-            className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none bg-white placeholder:text-gray-400 text-gray-900 font-medium shadow-sm"
+            className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:ring-2 focus:ring-[#0d3451] focus:border-[#0d3451] outline-none bg-white placeholder:text-gray-400 text-gray-900 font-medium shadow-sm"
           />
         </div>
 
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full bg-blue-600 text-white font-bold py-4 px-6 rounded-lg hover:bg-blue-700 transition-all duration-300 disabled:bg-gray-400 disabled:cursor-not-allowed shadow-lg hover:shadow-xl hover:scale-105 transform"
+          className="w-full bg-[#0d3451] text-white font-bold py-4 px-6 rounded-lg hover:bg-[#0d3451]/80 transition-all duration-300 disabled:bg-gray-400 disabled:cursor-not-allowed shadow-lg hover:shadow-xl hover:scale-105 transform flex items-center justify-center"
         >
-          {isSubmitting ? "Mengirim..." : "Get Started"}
+          {isSubmitting ? (
+            <>
+              <LoadingSpinner size="sm" className="mr-2" />
+              Mengirim...
+            </>
+          ) : (
+            "Get Started"
+          )}
         </button>
       </form>
     </div>
+    </ErrorBoundary>
   );
 }

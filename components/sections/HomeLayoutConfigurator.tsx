@@ -2,7 +2,23 @@
 
 import { useState, useEffect, useRef, useMemo, useCallback, memo } from "react";
 import type { CSSProperties } from "react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { LoadingSpinner, LoadingOverlay } from "@/components/LoadingSpinner";
+import {
+  PRICE_PER_M2,
+  ANIM_MS,
+  TOP_OVERLAP,
+  MID_OVERLAP,
+  SLIDE_TRANSITION,
+  GROUND_FLOOR_OPTIONS,
+  MID_FLOOR_2_OPTIONS,
+  MID_FLOOR_3_OPTIONS,
+  TOP_FLOOR_OPTIONS,
+  GENTENG_ROOF,
+  DEFAULT_TANAH_M2,
+} from "@/constants";
 
 type Lantai = "2.5" | "3.5";
 
@@ -14,36 +30,7 @@ interface FloorOption {
   size: number; // in m²
 }
 
-// Floor options data
-const GROUND_FLOOR_OPTIONS: FloorOption[] = [
-  { id: "room-plus-a", name: "Room Plus A", image: "/Isometri/1A.png", size: 25 },
-  { id: "room-plus-b", name: "Room Plus B", image: "/Isometri/2A.png", size: 28 },
-  { id: "carport-plus-a", name: "Carport Plus A", image: "/Isometri/3A.png", size: 20 },
-  { id: "carport-plus-b", name: "Carport Plus B", image: "/Isometri/4A.png", size: 22 },
-];
-
-const MID_FLOOR_2_OPTIONS: FloorOption[] = [
-  { id: "room-plus", name: "Room Plus", image: "/Isometri/1B.png", size: 20 },
-  { id: "living-plus-a", name: "Living Plus A", image: "/Isometri/2B.png", size: 30 },
-  { id: "living-plus-b", name: "Living Plus B", image: "/Isometri/3B.png", size: 32 },
-];
-
-const MID_FLOOR_3_OPTIONS: FloorOption[] = [
-  { id: "room-plus-3", name: "Room Plus", image: "/Isometri/1C.png", size: 20 },
-  { id: "living-plus-a-3", name: "Living Plus A", image: "/Isometri/2C.png", size: 30 },
-  { id: "living-plus-b-3", name: "Living Plus B", image: "/Isometri/3C.png", size: 32 },
-];
-
-const TOP_FLOOR_OPTIONS: FloorOption[] = [
-  { id: "room-plus-top", name: "Room Plus", image: "/Isometri/Genteng.png", size: 20 },
-];
-
-const PRICE_PER_M2 = 15000000; // IDR 15 juta per m²
-
-const ANIM_MS = 700;
-const TOP_OVERLAP = -15;
-const MID_OVERLAP = -20;
-const SLIDE_TRANSITION = "transform 700ms ease-in-out, opacity 700ms ease-in-out, filter 700ms ease-in-out";
+// Floor options data imported from constants
 
 interface FloorLayerProps {
   title: string;
@@ -188,11 +175,6 @@ const FloorLayer = memo(function FloorLayer({
       const prevIdx = (currentIndex - 1 + len) % len;
       const nextIdx = (currentIndex + 1) % len;
 
-      if (idx === prevIdx && idx === nextIdx) {
-        // two-item carousel: treat the sibling as a single preview
-        return "next";
-      }
-
       if (idx === prevIdx) return "prev";
       if (idx === nextIdx) return "next";
       return "hidden";
@@ -205,7 +187,7 @@ const FloorLayer = memo(function FloorLayer({
     return null;
   }
 
-  // Transform calculator (isometric slide)
+  // Transform calculator (horizontal slide)
   // We keep the same DOM nodes alive (stable keys + memoized component) and only
   // tweak their transforms/filters. React diffs those style props without
   // remounting, so the browser interpolates the values via CSS transitions and
@@ -241,8 +223,8 @@ const FloorLayer = memo(function FloorLayer({
         };
       case "prev":
         return {
-          transform: "translate3d(-60%,30%,0) scale(0.85)",
-          opacity: 0.35,
+          transform: "translate3d(-50%,0,0) scale(0.75)",
+          opacity: 0.7,
           zIndex: 2,
           filter: previewFilter,
           transition,
@@ -252,8 +234,8 @@ const FloorLayer = memo(function FloorLayer({
         };
       case "next":
         return {
-          transform: "translate3d(60%,-30%,0) scale(0.85)",
-          opacity: 0.35,
+          transform: "translate3d(50%,0,0) scale(0.75)",
+          opacity: 0.7,
           zIndex: 2,
           filter: previewFilter,
           transition,
@@ -263,7 +245,7 @@ const FloorLayer = memo(function FloorLayer({
         };
       default:
         return {
-          transform: "translate3d(0,25%, -140px) scale(0.7)",
+          transform: "translate3d(0,0,0) scale(0.6)",
           opacity: 0,
           zIndex: 1,
           filter: previewFilter,
@@ -293,12 +275,13 @@ const FloorLayer = memo(function FloorLayer({
       );
     }
     return (
-      <img
+      <Image
         src={option.image}
         alt={option.name}
+        width={400}
+        height={300}
         className="w-full h-auto select-none"
-        loading="eager"
-        decoding="async"
+        priority
         draggable={false}
         onError={() => setErr(true)}
       />
@@ -318,29 +301,75 @@ const FloorLayer = memo(function FloorLayer({
     >
       <div
         className="relative w-full overflow-hidden"
-        style={{ perspective: "1500px" }}
       >
         <div className="pointer-events-none opacity-0">
           <IsoImage option={activeOption} />
         </div>
-        {options.map((option, idx) => {
-          const position = getPosition(idx);
-          const style = activeSlideStyle(position);
-          const isCurrent = position === "current";
+        {(() => {
+          if (len === 2) {
+            // For 2-item carousel, create 4 positions with different indices
+            // This makes it look like 4 different images rotating
+            const displayOptions = [...options, ...options]; // [A, B, A, B]
+            
+            return displayOptions.map((option, idx) => {
+              let position: SlidePosition;
+              
+              // Create 4-position rotation that looks like 4 different images
+              // When currentIndex = 0: [A, B, A, B] -> [current, next, prev, hidden]
+              // When currentIndex = 1: [A, B, A, B] -> [prev, current, hidden, next]
+              
+              if (currentIndex === 0) {
+                // Showing A (index 0): A is current, B is next, A is prev, B is hidden
+                if (idx === 0) position = "current";
+                else if (idx === 1) position = "next";
+                else if (idx === 2) position = "prev";
+                else position = "hidden";
+              } else {
+                // Showing B (index 1): A is prev, B is current, A is hidden, B is next
+                if (idx === 0) position = "prev";
+                else if (idx === 1) position = "current";
+                else if (idx === 2) position = "hidden";
+                else position = "next";
+              }
+              
+              const style = activeSlideStyle(position);
+              const isCurrent = position === "current";
 
-          return (
-            <div
-              key={option.id}
-              className="absolute inset-0 flex items-center justify-center"
-              style={style}
-              aria-hidden={!isCurrent}
-            >
-              <div className="w-full">
-                <IsoImage option={option} />
-              </div>
-            </div>
-          );
-        })}
+              return (
+                <div
+                  key={`${option.id}-${idx}`}
+                  className="absolute inset-0 flex items-center justify-center"
+                  style={style}
+                  aria-hidden={!isCurrent}
+                >
+                  <div className="w-full">
+                    <IsoImage option={option} />
+                  </div>
+                </div>
+              );
+            });
+          } else {
+            // For 3+ item carousel, use normal logic
+            return options.map((option, idx) => {
+              const position = getPosition(idx);
+              const style = activeSlideStyle(position);
+              const isCurrent = position === "current";
+
+              return (
+                <div
+                  key={option.id}
+                  className="absolute inset-0 flex items-center justify-center"
+                  style={style}
+                  aria-hidden={!isCurrent}
+                >
+                  <div className="w-full">
+                    <IsoImage option={option} />
+                  </div>
+                </div>
+              );
+            });
+          }
+        })()}
 
         {/* Arrows */}
         {hasMultiple && (
@@ -349,7 +378,7 @@ const FloorLayer = memo(function FloorLayer({
               onClick={() => startTransition("prev")}
               disabled={isTransitioning}
               className="absolute top-1/2 -translate-y-1/2 rounded-full bg-white/95 hover:bg-white shadow-2xl transition-all duration-300 flex items-center justify-center text-gray-800 opacity-0 group-hover:opacity-100 hover:scale-110 z-20 disabled:opacity-50 disabled:cursor-not-allowed focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              style={{ left: "16.66%", width: "min(10vw, 10vh)", height: "min(10vw, 10vh)", padding: "min(2vw, 2vh)" }}
+              style={{ left: "8%", width: "min(8vw, 8vh)", height: "min(8vw, 8vh)", padding: "min(1.5vw, 1.5vh)" }}
               aria-label={`Sebelumnya: ${title}`}
             >
               <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -361,7 +390,7 @@ const FloorLayer = memo(function FloorLayer({
               onClick={() => startTransition("next")}
               disabled={isTransitioning}
               className="absolute top-1/2 -translate-y-1/2 rounded-full bg-white/95 hover:bg-white shadow-2xl transition-all duration-300 flex items-center justify-center text-gray-800 opacity-0 group-hover:opacity-100 hover:scale-110 z-20 disabled:opacity-50 disabled:cursor-not-allowed focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              style={{ left: "83.33%", width: "min(10vw, 10vh)", height: "min(10vw, 10vh)", padding: "min(2vw, 2vh)" }}
+              style={{ left: "92%", width: "min(8vw, 8vh)", height: "min(8vw, 8vh)", padding: "min(1.5vw, 1.5vh)" }}
               aria-label={`Berikutnya: ${title}`}
             >
               <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -403,10 +432,9 @@ export function HomeLayoutConfigurator() {
   const [mid2Index, setMid2Index] = useState(0);
   const [mid3Index, setMid3Index] = useState(0);
   const [topIndex, setTopIndex] = useState(0);
-  const [zoom, setZoom] = useState(75); // Size: 50 (Small), 75 (Medium), 100 (Large)
-
-  const zoomScale = zoom / 100;
-  const tanah_m2 = 49;
+  const [isLoading, setIsLoading] = useState(true);
+  const [imageLoadError, setImageLoadError] = useState(false);
+  const tanah_m2 = DEFAULT_TANAH_M2;
 
   // Preload all images globally on mount
   useEffect(() => {
@@ -415,14 +443,42 @@ export function HomeLayoutConfigurator() {
       ...MID_FLOOR_2_OPTIONS,
       ...MID_FLOOR_3_OPTIONS,
       ...TOP_FLOOR_OPTIONS,
+      GENTENG_ROOF,
     ];
 
+    let loadedCount = 0;
+    const totalImages = allOptions.length;
+
+    const handleImageLoad = () => {
+      loadedCount++;
+      if (loadedCount === totalImages) {
+        setIsLoading(false);
+      }
+    };
+
+    const handleImageError = () => {
+      setImageLoadError(true);
+      loadedCount++;
+      if (loadedCount === totalImages) {
+        setIsLoading(false);
+      }
+    };
+
     allOptions.forEach((option) => {
-      const img = new Image();
-      img.decoding = "async";
+      const img = new window.Image();
+      img.decoding = "auto";
       img.fetchPriority = "high";
+      img.onload = handleImageLoad;
+      img.onerror = handleImageError;
       img.src = option.image;
     });
+
+    // Fallback timeout in case images don't load
+    const timeout = setTimeout(() => {
+      setIsLoading(false);
+    }, 5000);
+
+    return () => clearTimeout(timeout);
   }, []);
 
   // Get current selections
@@ -483,15 +539,41 @@ export function HomeLayoutConfigurator() {
     setTopIndex((prev) => (prev + 1) % TOP_FLOOR_OPTIONS.length);
   }, []);
 
-  const topOverlapValue = `${TOP_OVERLAP * zoomScale}%`;
-  const midOverlapValue = `${MID_OVERLAP * zoomScale}%`;
+  const topOverlapValue = `${TOP_OVERLAP * 1}%`;
+  const midOverlapValue = `${MID_OVERLAP * 1}%`;
+
+  if (imageLoadError) {
+    return (
+      <section
+        id="configurator"
+        className="py-16 bg-gradient-to-br from-gray-50 to-gray-100"
+      >
+        <div className="w-full">
+          <div className="text-center p-8">
+            <div className="text-6xl mb-4">⚠️</div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              Gagal Memuat Gambar
+            </h2>
+            <p className="text-gray-600 mb-4">
+              Terjadi kesalahan saat memuat gambar desain. Silakan muat ulang halaman.
+            </p>
+            <Button onClick={() => window.location.reload()}>
+              Muat Ulang Halaman
+            </Button>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
-    <section
-      id="configurator"
-      className="py-16 bg-gradient-to-br from-gray-50 to-gray-100"
-    >
-      <div className="w-full">
+    <ErrorBoundary>
+      <section
+        id="configurator"
+        className="py-16 bg-gradient-to-br from-gray-50 to-gray-100 relative"
+      >
+        <LoadingOverlay isVisible={isLoading} text="Memuat desain rumah..." />
+        <div className="w-full">
         <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-900 mb-4 px-4 pt-4">
           Desain Rumah Anda
         </h2>
@@ -508,8 +590,8 @@ export function HomeLayoutConfigurator() {
                 onClick={() => setLantai("2.5")}
                 className={`px-6 py-3 rounded-lg text-sm font-semibold transition-all ${
                   lantai === "2.5"
-                    ? "bg-blue-600 text-white shadow-lg"
-                    : "bg-white text-gray-700 border-2 border-gray-200 hover:border-blue-400"
+                    ? "bg-[#0d3451] text-white shadow-lg"
+                    : "bg-white text-gray-700 border-2 border-gray-200 hover:border-[#0d3451]/50"
                 }`}
               >
                 2,5 Lantai
@@ -518,45 +600,11 @@ export function HomeLayoutConfigurator() {
                 onClick={() => setLantai("3.5")}
                 className={`px-6 py-3 rounded-lg text-sm font-semibold transition-all ${
                   lantai === "3.5"
-                    ? "bg-blue-600 text-white shadow-lg"
-                    : "bg-white text-gray-700 border-2 border-gray-200 hover:border-blue-400"
+                    ? "bg-[#0d3451] text-white shadow-lg"
+                    : "bg-white text-gray-700 border-2 border-gray-200 hover:border-[#0d3451]/50"
                 }`}
               >
                 3,5 Lantai
-              </button>
-            </div>
-
-            {/* Image Size Selection */}
-            <div className="flex gap-3">
-              <button
-                onClick={() => setZoom(50)}
-                className={`px-6 py-3 rounded-lg text-sm font-semibold transition-all ${
-                  zoom === 50
-                    ? "bg-blue-600 text-white shadow-lg"
-                    : "bg-white text-gray-700 border-2 border-gray-200 hover:border-blue-400"
-                }`}
-              >
-                Small
-              </button>
-              <button
-                onClick={() => setZoom(75)}
-                className={`px-6 py-3 rounded-lg text-sm font-semibold transition-all ${
-                  zoom === 75
-                    ? "bg-blue-600 text-white shadow-lg"
-                    : "bg-white text-gray-700 border-2 border-gray-200 hover:border-blue-400"
-                }`}
-              >
-                Medium
-              </button>
-              <button
-                onClick={() => setZoom(100)}
-                className={`px-6 py-3 rounded-lg text-sm font-semibold transition-all ${
-                  zoom === 100
-                    ? "bg-blue-600 text-white shadow-lg"
-                    : "bg-white text-gray-700 border-2 border-gray-200 hover:border-blue-400"
-                }`}
-              >
-                Large
               </button>
             </div>
           </div>
@@ -564,7 +612,25 @@ export function HomeLayoutConfigurator() {
 
         {/* Stacked Floor Visualization - Full Width with Overlap */}
         <div className="relative w-full">
-          {/* Top Floor / Roof */}
+          {/* Genteng Roof - Fixed, non-changeable */}
+          <div
+            style={{
+              marginBottom: topOverlapValue,
+              transition: 'margin-bottom 0.3s ease-out'
+            }}
+          >
+            <FloorLayer
+              title="Genteng Roof"
+              options={[GENTENG_ROOF]}
+              currentIndex={0}
+              onPrev={() => {}}
+              onNext={() => {}}
+              zIndex={40}
+              zoom={100}
+            />
+          </div>
+
+          {/* Top Floor */}
           <div
             style={{
               marginBottom: topOverlapValue,
@@ -578,7 +644,7 @@ export function HomeLayoutConfigurator() {
               onPrev={handleTopPrev}
               onNext={handleTopNext}
               zIndex={30}
-              zoom={zoom}
+              zoom={100}
             />
           </div>
 
@@ -598,7 +664,7 @@ export function HomeLayoutConfigurator() {
                 onPrev={handleMid3Prev}
                 onNext={handleMid3Next}
                 zIndex={20}
-                zoom={zoom}
+                zoom={100}
               />
             </div>
           )}
@@ -617,7 +683,7 @@ export function HomeLayoutConfigurator() {
               onPrev={handleMid2Prev}
               onNext={handleMid2Next}
               zIndex={10}
-              zoom={zoom}
+              zoom={100}
             />
           </div>
 
@@ -629,7 +695,7 @@ export function HomeLayoutConfigurator() {
             onPrev={handleGroundPrev}
             onNext={handleGroundNext}
             zIndex={0}
-            zoom={zoom}
+            zoom={100}
           />
         </div>
 
@@ -657,7 +723,7 @@ export function HomeLayoutConfigurator() {
 
               <div>
                 <h3 className="text-sm font-semibold text-gray-600 mb-2">Estimasi Biaya</h3>
-                <p className="text-3xl md:text-4xl font-bold text-blue-600 mb-2">
+                <p className="text-3xl md:text-4xl font-bold text-[#0d3451] mb-2">
                   {formatIDR(estimasiBiaya)}
                 </p>
                 <p className="text-xs text-gray-500">
@@ -673,5 +739,6 @@ export function HomeLayoutConfigurator() {
         </div>
       </div>
     </section>
+    </ErrorBoundary>
   );
 }

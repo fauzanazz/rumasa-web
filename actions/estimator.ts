@@ -1,27 +1,7 @@
 "use server";
 
 import type { EstimateInput, EstimateOutput } from "@/types";
-
-// Configuration - can be moved to env or database
-const PRICE_PER_M2 = 15000000; // IDR 15 juta per m²
-const MODULE_SIZES: Record<string, number> = {
-  // Ground floor modules (in m²)
-  "Room Plus A": 25,
-  "Room Plus B": 28,
-  "Carport Plus A": 20,
-  "Carport Plus B": 22,
-  "Kitchen Plus": 18,
-
-  // Mid floor modules
-  "Room Plus": 20,
-  "Living Plus A": 30,
-  "Living Plus B": 32,
-  "Studio Apartment": 35,
-  "Studio Basic": 25,
-
-  // Top floor modules
-  "Living Plus": 30,
-};
+import { PRICE_PER_M2, MODULE_SIZES, STYLE_PREMIUMS } from "@/constants";
 
 function calculateBuildingArea(input: EstimateInput): number {
   let totalArea = 0;
@@ -60,13 +40,18 @@ export async function calculateEstimate(payload: EstimateInput): Promise<Estimat
 
   // Optional additions based on style
   const opsi_tambahan: Array<{ label: string; harga: number }> = [];
-
-  if (payload.style === "Noir") {
-    opsi_tambahan.push({ label: "Premium Noir Finishing", harga: 50000000 });
-  } else if (payload.style === "Light Concrete") {
-    opsi_tambahan.push({ label: "Premium Concrete Finishing", harga: 45000000 });
-  } else if (payload.style === "Terracota") {
-    opsi_tambahan.push({ label: "Premium Terracota Finishing", harga: 55000000 });
+  const stylePremium = STYLE_PREMIUMS[payload.style];
+  
+  if (stylePremium > 0) {
+    const styleLabels = {
+      "Noir": "Premium Noir Finishing",
+      "Light Concrete": "Premium Concrete Finishing", 
+      "Terracota": "Premium Terracota Finishing"
+    };
+    opsi_tambahan.push({ 
+      label: styleLabels[payload.style] || "Premium Finishing", 
+      harga: stylePremium 
+    });
   }
 
   // Calculate subtotal

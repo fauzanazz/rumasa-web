@@ -7,8 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { consultationFormSchema, type ConsultationFormData } from "@/lib/validations";
 import { submitConsultation } from "@/actions/sheets";
+import { ERROR_MESSAGES, SUCCESS_MESSAGES } from "@/constants";
 
 export function ConsultationForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -40,19 +43,19 @@ export function ConsultationForm() {
       if (result.ok) {
         setSubmitResult({
           success: true,
-          message: `Terima kasih! Konsultasi Anda telah dijadwalkan. ID: ${result.ticketId}`,
+          message: `${SUCCESS_MESSAGES.CONSULTATION_SCHEDULED} ID: ${result.ticketId}`,
         });
         reset();
       } else {
         setSubmitResult({
           success: false,
-          message: "error" in result ? result.error : "Terjadi kesalahan",
+          message: "error" in result ? result.error : ERROR_MESSAGES.GENERIC,
         });
       }
     } catch (error) {
       setSubmitResult({
         success: false,
-        message: "Terjadi kesalahan. Silakan coba lagi.",
+        message: ERROR_MESSAGES.GENERIC,
       });
     } finally {
       setIsSubmitting(false);
@@ -60,8 +63,9 @@ export function ConsultationForm() {
   };
 
   return (
-    <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white">
-      <div className="max-w-2xl mx-auto">
+    <ErrorBoundary>
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white">
+        <div className="max-w-2xl mx-auto">
         <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-900 mb-12">
           Jadwalkan Konsultasi
         </h2>
@@ -110,7 +114,7 @@ export function ConsultationForm() {
             <select
               id="waktu_preferensi"
               {...register("waktu_preferensi")}
-              className="flex h-11 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
+              className="flex h-11 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0d3451] focus-visible:ring-offset-2"
             >
               <option value="">Pilih waktu</option>
               <option value="Pagi (09:00 - 12:00)">Pagi (09:00 - 12:00)</option>
@@ -148,10 +152,18 @@ export function ConsultationForm() {
 
           {/* Submit Button */}
           <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? "Mengirim..." : "Jadwalkan Konsultasi"}
+            {isSubmitting ? (
+              <>
+                <LoadingSpinner size="sm" className="mr-2" />
+                Mengirim...
+              </>
+            ) : (
+              "Jadwalkan Konsultasi"
+            )}
           </Button>
         </form>
       </div>
     </section>
+    </ErrorBoundary>
   );
 }

@@ -65,7 +65,7 @@ export function Footer() {
             <div className="flex gap-4">
               <Link
                 href="#"
-                className="w-10 h-10 bg-blue-600 rounded flex items-center justify-center hover:bg-blue-700 transition-colors"
+                className="w-10 h-10 bg-[#0d3451] rounded flex items-center justify-center hover:bg-[#0d3451]/80 transition-colors"
                 aria-label="LinkedIn"
               >
                 <span className="text-white text-lg">in</span>

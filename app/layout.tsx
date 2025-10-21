@@ -2,6 +2,12 @@ import type { Metadata } from "next";
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
 import "./globals.css";
+import { Manrope } from "next/font/google";
+
+const manrope = Manrope({
+  subsets: ["latin"],
+  variable: "--font-manrope",
+});
 
 export const metadata: Metadata = {
   title: "Rumasa - Rumah Sesuai Kebutuhan Anda",
@@ -20,7 +26,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="id">
-      <body className="antialiased">
+      <body className={`${manrope.variable} antialiased`}>
         <Navigation />
         <main>{children}</main>
         <Footer />

@@ -4,11 +4,11 @@ import Image from "next/image";
 
 export function PopularDesigns() {
   return (
-    <section id="popular-designs" className="py-16 px-4 sm:px-6 lg:px-8 bg-white">
+    <section id="popular-designs" className="py-16 px-4 sm:px-6 lg:px-8 bg-[#0d3451]">
       <div className="max-w-7xl mx-auto">
         {/* Signature Designs Section */}
         <div className="mb-20">
-          <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-900 mb-12">
+          <h2 className="text-3xl md:text-4xl font-bold text-center text-white mb-12">
             Pilihan Desain Populer
           </h2>
 
@@ -22,7 +22,7 @@ export function PopularDesigns() {
                 <div className={`${design.bgColor} h-64 flex items-center justify-center p-4 transition-all duration-300`}>
                   <div className="relative w-full h-full">
                     <Image
-                      src={[`/Fasad/1.png`, `/Fasad/2.png`, `/Fasad/3.png`][idx % 3]}
+                      src={[`/Fasad/1.webp`, `/Fasad/2.webp`, `/Fasad/3.webp`][idx % 3]}
                       alt={design.name}
                       fill
                       className="object-contain transition-transform duration-300 group-hover:scale-105"
@@ -34,7 +34,7 @@ export function PopularDesigns() {
 
                 {/* Content */}
                 <div className="p-6 transition-all duration-300">
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2 transition-colors duration-300 group-hover:text-blue-600">
+                  <h3 className="text-2xl font-bold text-gray-900 mb-2 transition-colors duration-300 group-hover:text-[#0d3451]">
                     {design.name}
                   </h3>
                   <p className="text-gray-600 mb-4 transition-colors duration-300 group-hover:text-gray-700">

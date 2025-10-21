@@ -4,14 +4,14 @@ import { useState, useEffect } from "react";
 import { heroCopy } from "@/config/copy";
 
 const carouselImages = [
-  '/hero/1_upscale01.png',
-  '/hero/3_upscale01.png',
-  '/hero/4_upscale01.png',
-  '/hero/5_upscale01.png',
-  '/hero/7_upscale01.png',
-  '/hero/11_upscale01.png',
-  '/hero/Scene1_upscale01.png',
-  '/hero/Scene2_upscale01.png',
+  '/hero/1_upscale01.webp',
+  '/hero/3_upscale01.webp',
+  '/hero/4_upscale01.webp',
+  '/hero/5_upscale01.webp',
+  '/hero/7_upscale01.webp',
+  '/hero/11_upscale01.webp',
+  '/hero/Scene1_upscale01.webp',
+  '/hero/Scene2_upscale01.webp',
 ];
 
 export function Hero() {
@@ -30,7 +30,7 @@ export function Hero() {
   };
 
   return (
-    <section className="relative min-h-[600px] flex items-center py-20 px-4 sm:px-6 lg:px-8 overflow-hidden">
+    <section className="relative min-h-[600px] flex items-center py-20 px-4 sm:px-6 lg:px-8 overflow-hidden" style={{ height: 'calc(100vh - 64px)' }}>
       {/* Carousel Background */}
       {carouselImages.map((image, index) => (
         <div
@@ -65,7 +65,7 @@ export function Hero() {
                 element.scrollIntoView({ behavior: "smooth", block: "start" });
               }
             }}
-            className="inline-flex items-center justify-center px-8 py-4 text-lg font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 transform"
+            className="inline-flex items-center justify-center px-8 py-4 text-lg font-semibold text-white bg-[#0d3451] rounded-lg hover:bg-[#0d3451]/80 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 transform"
           >
             {heroCopy.secondary_cta}
             <svg
