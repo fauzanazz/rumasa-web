@@ -22,6 +22,7 @@ import {
 
 type Lantai = "2.5" | "3.5";
 
+
 // Floor option interface
 interface FloorOption {
   id: string;
@@ -39,7 +40,6 @@ interface FloorLayerProps {
   onPrev: () => void;
   onNext: () => void;
   zIndex: number;
-  zoom: number;
 }
 
 type SlidePosition = "current" | "prev" | "next" | "hidden";
@@ -51,7 +51,6 @@ const FloorLayer = memo(function FloorLayer({
   onPrev,
   onNext,
   zIndex,
-  zoom,
 }: FloorLayerProps) {
   const layerRef = useRef<HTMLDivElement>(null);
 
@@ -61,15 +60,10 @@ const FloorLayer = memo(function FloorLayer({
 
   const len = options.length;
   const hasMultiple = len > 1;
-  const zoomScale = zoom / 100;
-  const widthPercent = zoomScale * 100;
-  const sideOffset = ((1 - zoomScale) * 50).toFixed(3);
 
   const containerStyle: CSSProperties = {
     zIndex,
-    width: `${widthPercent}%`,
-    marginLeft: `${sideOffset}%`,
-    marginRight: `${sideOffset}%`,
+    width: "100%",
     transition: "width 300ms ease, margin 300ms ease",
   };
 
@@ -106,7 +100,6 @@ const FloorLayer = memo(function FloorLayer({
     }
   }, [hasMultiple, isTransitioning]);
 
-  // Touch swipe (kept), no wheel at all
   useEffect(() => {
     const el = layerRef.current;
     if (!el || !hasMultiple) return;
@@ -264,7 +257,10 @@ const FloorLayer = memo(function FloorLayer({
       return (
         <div
           className="w-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center"
-          style={{ height: 200, clipPath: "polygon(10% 0%, 90% 0%, 100% 100%, 0% 100%)" }}
+          style={{ 
+            height: 200, 
+            clipPath: "polygon(10% 0%, 90% 0%, 100% 100%, 0% 100%)"
+          }}
         >
           <div className="text-center p-6">
             <div className="text-5xl mb-3">🏠</div>
@@ -278,9 +274,9 @@ const FloorLayer = memo(function FloorLayer({
       <Image
         src={option.image}
         alt={option.name}
-        width={400}
-        height={300}
-        className="w-full h-auto select-none"
+        width={1200}
+        height={900}
+        className="w-full h-auto select-none scale-100 md:scale-90 xl:scale-75 transition-transform duration-300"
         priority
         draggable={false}
         onError={() => setErr(true)}
@@ -300,56 +296,12 @@ const FloorLayer = memo(function FloorLayer({
       onKeyDown={onKeyDown}
     >
       <div
-        className="relative w-full overflow-hidden"
+        className="relative w-full overflow-hidden flex items-center justify-center h-[250px] 2xl:h-[800px] xl:h-[600px] md:h-[400px] sm:h-[300px] transition-all duration-300"
       >
         <div className="pointer-events-none opacity-0">
           <IsoImage option={activeOption} />
         </div>
         {(() => {
-          if (len === 2) {
-            // For 2-item carousel, create 4 positions with different indices
-            // This makes it look like 4 different images rotating
-            const displayOptions = [...options, ...options]; // [A, B, A, B]
-            
-            return displayOptions.map((option, idx) => {
-              let position: SlidePosition;
-              
-              // Create 4-position rotation that looks like 4 different images
-              // When currentIndex = 0: [A, B, A, B] -> [current, next, prev, hidden]
-              // When currentIndex = 1: [A, B, A, B] -> [prev, current, hidden, next]
-              
-              if (currentIndex === 0) {
-                // Showing A (index 0): A is current, B is next, A is prev, B is hidden
-                if (idx === 0) position = "current";
-                else if (idx === 1) position = "next";
-                else if (idx === 2) position = "prev";
-                else position = "hidden";
-              } else {
-                // Showing B (index 1): A is prev, B is current, A is hidden, B is next
-                if (idx === 0) position = "prev";
-                else if (idx === 1) position = "current";
-                else if (idx === 2) position = "hidden";
-                else position = "next";
-              }
-              
-              const style = activeSlideStyle(position);
-              const isCurrent = position === "current";
-
-              return (
-                <div
-                  key={`${option.id}-${idx}`}
-                  className="absolute inset-0 flex items-center justify-center"
-                  style={style}
-                  aria-hidden={!isCurrent}
-                >
-                  <div className="w-full">
-                    <IsoImage option={option} />
-                  </div>
-                </div>
-              );
-            });
-          } else {
-            // For 3+ item carousel, use normal logic
             return options.map((option, idx) => {
               const position = getPosition(idx);
               const style = activeSlideStyle(position);
@@ -362,13 +314,12 @@ const FloorLayer = memo(function FloorLayer({
                   style={style}
                   aria-hidden={!isCurrent}
                 >
-                  <div className="w-full">
+                  <div className="w-full flex items-center justify-center">
                     <IsoImage option={option} />
                   </div>
                 </div>
               );
             });
-          }
         })()}
 
         {/* Arrows */}
@@ -626,7 +577,6 @@ export function HomeLayoutConfigurator() {
               onPrev={() => {}}
               onNext={() => {}}
               zIndex={40}
-              zoom={100}
             />
           </div>
 
@@ -644,7 +594,6 @@ export function HomeLayoutConfigurator() {
               onPrev={handleTopPrev}
               onNext={handleTopNext}
               zIndex={30}
-              zoom={100}
             />
           </div>
 
@@ -664,7 +613,6 @@ export function HomeLayoutConfigurator() {
                 onPrev={handleMid3Prev}
                 onNext={handleMid3Next}
                 zIndex={20}
-                zoom={100}
               />
             </div>
           )}
@@ -683,7 +631,6 @@ export function HomeLayoutConfigurator() {
               onPrev={handleMid2Prev}
               onNext={handleMid2Next}
               zIndex={10}
-              zoom={100}
             />
           </div>
 
@@ -695,7 +642,6 @@ export function HomeLayoutConfigurator() {
             onPrev={handleGroundPrev}
             onNext={handleGroundNext}
             zIndex={0}
-            zoom={100}
           />
         </div>
 
