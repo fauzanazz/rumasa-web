@@ -11,7 +11,7 @@ export const heroCopy = {
 export const signatureDesigns = [
   {
     name: "Tipe Keluarga Kecil",
-    specs: "2,5 lantai • 3 kamar tidur • 4 kamar mandi",
+    specs: "🏠 2,5 lantai • 🛏️ 3 kamar tidur • 🚿 4 kamar mandi",
     description: "Desain minimalis dengan aksen gelap yang memberikan kesan elegan dan modern. Cocok untuk Anda yang menyukai nuansa sophisticated.",
     bgColor: "bg-amber-100",
     houseColor: "bg-amber-800",
@@ -19,7 +19,7 @@ export const signatureDesigns = [
   },
   {
     name: "Tipe Keluarga Besar",
-    specs: "3,5 lantai • 5 kamar tidur • 5 kamar mandi",
+    specs: "🏠 3,5 lantai • 🛏️ 5 kamar tidur • 🚿 5 kamar mandi",
     description: "Desain modern dengan aksen gelap yang memberikan kesan elegan dan modern. Cocok untuk Anda yang menyukai nuansa sophisticated.",
     bgColor: "bg-blue-100",
     houseColor: "bg-slate-700",
@@ -27,7 +27,7 @@ export const signatureDesigns = [
   },
   {
     name: "Tipe Kos Eksklusif",
-    specs: "3,5 lantai • 5 kamar tidur • 5 kamar mandi • Carport luas",
+    specs: "🏠 3,5 lantai • 🛏️ 5 kamar tidur • 🚿 5 kamar mandi • 🚗 Carport luas",
     description: "Desain modern dengan aksen gelap yang memberikan kesan elegan dan modern. Cocok untuk Anda yang menyukai nuansa sophisticated.",
     bgColor: "bg-emerald-100",
     houseColor: "bg-emerald-800",

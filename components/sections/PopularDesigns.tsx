@@ -1,6 +1,40 @@
 import { signatureDesigns } from "@/config/copy";
 import Image from "next/image";
+import { Home, Bed, Bath, Car } from "lucide-react";
 
+// Helper function to render specs with icons
+const renderSpecsWithIcons = (specs: string) => {
+  const parts = specs.split(' • ');
+  return parts.map((part, index) => {
+    let icon;
+    let text = part;
+    
+    if (part.includes('lantai')) {
+      icon = <Home className="w-4 h-4" />;
+      text = part.replace('🏠 ', '');
+    } else if (part.includes('kamar tidur')) {
+      icon = <Bed className="w-4 h-4" />;
+      text = part.replace('🛏️ ', '');
+    } else if (part.includes('kamar mandi')) {
+      icon = <Bath className="w-4 h-4" />;
+      text = part.replace('🚿 ', '');
+    } else if (part.includes('Carport')) {
+      icon = <Car className="w-4 h-4" />;
+      text = part.replace('🚗 ', '');
+    }
+    
+    return (
+      <span key={index} className="flex items-center gap-2">
+        {icon && (
+          <span className="w-8 h-8 rounded-full bg-[#0d3451] flex items-center justify-center text-white">
+            {icon}
+          </span>
+        )}
+        <span>{text}</span>
+      </span>
+    );
+  });
+};
 
 export function PopularDesigns() {
   return (
@@ -37,9 +71,11 @@ export function PopularDesigns() {
                   <h3 className="text-2xl font-bold text-gray-900 mb-2 transition-colors duration-300 group-hover:text-[#0d3451]">
                     {design.name}
                   </h3>
-                  <p className="text-gray-600 mb-4 transition-colors duration-300 group-hover:text-gray-700">
-                    {design.specs}
-                  </p>
+                  <div className="text-gray-600 mb-4 transition-colors duration-300 group-hover:text-gray-700">
+                    <div className="flex flex-wrap gap-3">
+                      {renderSpecsWithIcons(design.specs)}
+                    </div>
+                  </div>
                   <p className="text-gray-700 transition-colors duration-300 group-hover:text-gray-900">
                     {design.description}
                   </p>

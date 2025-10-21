@@ -296,7 +296,7 @@ const FloorLayer = memo(function FloorLayer({
       onKeyDown={onKeyDown}
     >
       <div
-        className="relative w-full overflow-hidden flex items-center justify-center h-[250px] 2xl:h-[800px] xl:h-[600px] md:h-[400px] sm:h-[300px] transition-all duration-300"
+        className="relative w-full overflow-hidden flex items-center justify-center h-[250px] 2xl:h-[800px] xl:h-[700px] md:h-[600px] sm:h-[450px] transition-all duration-300"
       >
         <div className="pointer-events-none opacity-0">
           <IsoImage option={activeOption} />
